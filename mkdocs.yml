@@ -6,8 +6,8 @@ site_url: https://xjjeffery.github.io
 use_directory_urls: false
 
 # Repository
-repo_name: xjjeffery/xjjeffery.github.io
-repo_url: https://github.com/xjjeffery/xjjeffery.github.io
+repo_name: xjjeffery/myblogs
+repo_url: https://github.com/xjjeffery/myblogs
 
 # Copyright
 copyright: Copyright &copy; 2024 JunXu</br>The website content is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>

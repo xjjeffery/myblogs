@@ -1,0 +1,7 @@
+# mkdocs plugins
+mkdocs
+mkdocs-material
+mkdocs-glightbox
+
+# search for Chinese
+jieba

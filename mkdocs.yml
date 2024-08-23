@@ -1,7 +1,7 @@
 # Project information
 site_name: xjjeffery 的个人网站
 site_author: xjjeffery
-site_dir: site
+site_dir: xjjeffery.github.io
 site_url: https://xjjeffery.github.io
 use_directory_urls: false
 
@@ -151,3 +151,7 @@ extra_javascript:
 
 nav:
   - index.md
+  - 零声 Linux C/C++ 高级全栈开发:
+    - 高性能网络设计专栏:
+      - 0voice/2204_cpp/network/01_network_io.md
+

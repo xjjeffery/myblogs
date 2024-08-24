@@ -377,3 +377,182 @@ tcp 客户端的搭建只需要两个步骤：
 编译运行上述两个程序，先启动服务端的程序，再启动客户端的程序。此时客户端会收到服务端发来的数据，并且两个程序都会立即退出。
 
 上述两个程序使用 `read` 和 `write` 函数，是因为在 Linux 中，一切都是文件，socket 也是文件，因此可以使用文件相关的读写操作。而在 Windows 中，网络套接字和文件是有区别的，需要使用网络读写专用的函数 `recv` 和 `send` 来进行操作，这两个函数在 Linux 中也适用。
+
+## 套接字类型与协议设置
+
+什么是协议(Protocol)，简单的说就是两个通信对象之间的一种通信方式，就比如我们人与人之间交流用中文，这就是一种协议(大家约定好的规则)。
+
+在前面提到过 `socket` 函数是用来创建套接字的，但是没有提到参数怎么用，此处做详细的分析。
+
+```c
+#include <sys/types.h>
+#include <sys/socket.h>
+
+// domain：套接字中使用的协议族(protocol family)信息
+// type：套接字数据传输类型信息
+// protocol：计算机间通信中使用的协议信息
+int socket(int domain, int type, int protocol);
+```
+
+### 协议族
+
+套接字中使用的协议有很多，这些协议在一起统称为协议族，定义在 `sys/socket.h` 头文件中，协议族中的协议简单分为以下几类(这里只介绍常用的)：
+
+- `AF_INET`：IPv4 互联网协议族
+- `AF_INET6`：IPv6 互联网协议族
+- `AF_LOCAL/AF_UNIX`：本地通信的 UNIX 协议族
+- `AF_PACKET`：底层套接字的协议族
+- `AF_IPX`：IPX Novell 协议族
+
+套接字的协议类型是由第一个参数决定，选取上面的其中一个
+
+### 套接字类型
+
+套接字类型是由第二个参数决定，来决定套接字的数传输方式，每一种协议都会由多种数据传输方式，下面以 `AF_INET` 来介绍两个具有代表性的数据传输方式：
+
+- `SOCK_STREAM`(面向连接的套接字)：面向连接，顾名思义就是必须要有连接才能进行数据传输，由以下几个特点，有点类似传送带传送物品
+    - 传输的过程中数据不会丢失
+    - 按序传输数据
+    - 传输的数据不存在数据边界
+    - 套接字连接必须一一对应
+- `SOCK_DRGAM`(面向消息的套接字)：顾名思义就是只管发，不管客户端是否有接收，有以下几个特点
+    - 强调快速传输而非传输顺序
+    - 传输的数据可能丢失也可能损毁
+    - 传输的数据没有边界
+    - 限制每次传输的数据大小
+
+### 最终协议的确定
+
+套接字的最终协议以及数据传输方式是由最后一个参数确定的，但是我们一般默认为 0，除非出现数据传输方式相同但协议不同的场景才会对最后一个参数做改变。如基于 TCP 套接字和 UDP 套接字就可以写成如下的样子
+
+```c
+int tcp_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+int udp_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+```
+
+tcp 数据传输方式如下图所示
+
+![](./assets/tcp_ip_network_programming/ch02/tcp_transport.png)
+
+## 地址族与数据序列
+
+IP(Internet Protocol) 是为收发网络数据而分配给计算机的值，可以通过这个 IP 找到指定的计算机，而端口是区分程序中创建的套接字而分配给套接字的序号。
+
+IP 地址分为两类，这两类地址的差别主要在于表示 IP 地址所用的字节数：
+
+- IPv4(Internet Protocol version 4)：4 字节地址族
+- IPv6(Internet Protocol version 6)：16 字节地址族，解决 2010 年前后 IP 地址耗尽的问题
+
+现在主要使用的还是 IPv4，其 4 字节内容会保存两个信息，分别是网络地址和主机地址，有以下四种方式表示
+
+![](./assets/tcp_ip_network_programming/ch03/ipv4_addr_family.png)
+
+因此在局域网中的所有主机的网络地址是相同的，而主机地址是不同的，此时外网有主机需要发送数据到此局域网中的某个主机中，首先解析 IP 地址中的网络地址，然后在由该网路地址的路由器或交换机根据数据中的主机地址想目标主机传递数据。
+
+这 4 字节的 IP 地址信息是如何区分出来哪些字节是网络地址，哪些字节是主机地址，这是根据 IP 地址的边界来区分的，如：
+
+- A 类地址的首字节范围：0~127
+- B 类地址的首字节范围：128~191
+- C 类地址的首字节范围：192~223
+
+有了 IP 就能区分计算机，但是还无法定位到主机主机终端具体程序，此时需要端口号来区分。端口号是与套接字一一对应的，因此无法将一个端口号分配给不同的套接字，这也是为什么前面不能以相同的端口号启动两次服务端。端口号是由 16 位构成，可分配的端口范围就为 0 ~ 65535。但 0 ~ 1023 是系统分配给特定程序的，所以我们使用的时候，要分配此范围之外的端口号。另外，虽然 TCP 套接字不能重复端口号，但是 UDP 和 TCP 不会共用套接字，所以两者是可以重复的。
+
+### 地址信息的表示
+
+IP 地址信息在代码中是通过结构体来表示的，在结构体中需要说明地址族类型、IP 地址以及端口号等信息，其结构为
+
+```c
+struct sockaddr_in {
+  sa_family_t sin_family; // 地址族
+  uint16_t sin_port;      // 16 位 TCP/UDP 端口号
+  struct in_addr sin_addr;// 32 位 IP 地址
+  char sin_zero[8];       // 不使用
+};
+
+//
+// IPv4 Internet address
+// This is an 'on-wire' format structure.
+//
+typedef struct in_addr {
+  union {
+    struct { UCHAR s_b1,s_b2,s_b3,s_b4; } S_un_b;
+    struct { USHORT s_w1,s_w2; } S_un_w;
+    ULONG S_addr;
+  } S_un;
+#define s_addr  S_un.S_addr /* can be used for most tcp & ip code */
+#define s_host  S_un.S_un_b.s_b2    // host on imp
+#define s_net   S_un.S_un_b.s_b1    // network
+#define s_imp   S_un.S_un_w.s_w2    // imp
+#define s_impno S_un.S_un_b.s_b4    // imp #
+#define s_lh    S_un.S_un_b.s_b3    // logical host
+} IN_ADDR, *PIN_ADDR, FAR *LPIN_ADDR;
+```
+
+为什么 `bind` 函数需要的是 `sockaddr` 结构体变量地址，而我们却传递 `sockaddr_in` 结构体变量的地址，这是因为 `sockaddr` 将 IP 地址和端口等信息保存在一起，这种方式较为麻烦，从下面的结构定义可以看出
+
+```c
+struct sockaddr {
+  sa_family_t sin_family;
+  char sa_data[14];
+};
+```
+
+### 网络字节序与地址变换
+
+不同的 CPU 中，数据的保存方式是不同的，如 4 字节的整型值 1 可以用 二进制表示如下
+
+00000000 00000000 00000000 00000001
+
+有些 CPU 则会倒序保存，保存形式如下
+
+00000001 00000000 00000000 00000000
+
+这两种方式就是所谓的大端序和小端序：
+
+- 大端序(Big Endian)：高位字节序存放到低位地址
+- 小端序(Little Endian)：高位字节序存放到高位地址
+
+如下所示：
+
+![](./assets/tcp_ip_network_programming/ch03/edian.png)
+
+如果两个计算机采用的是不同的字节序，则通过网络传输数据，解析后的数据是错误的，如 0x1234 小端序的机器发送到大端序解析后就是 0x3412。因此，在使用网络传输数据时约定统一方式，这种约定称为网络字节序 —— 大端序。
+
+也就是说，在进行网络传输时，小端序的机器必须进行转换，将数据转换成大端序，有以下几个转换函数：
+
+- `unsigned short htons(unsigned short);`
+- `unsigned short ntons(unsigned short);`
+- `unsigned long htonl(unsigned long);`
+- `unsigned long ntonl(unsigned long);`
+
+其中 h 代表主机字节序，n 代表网络网络字节序，这也是为什么在填充 `sockaddr_in` 结构体时要换成网络字节序。但是，不管你的主机是什么字节序，在编写代码时，都建议经过主机字节序转换为网络字节序的过程。
+
+### 网络地址的初始化与分配
+
+我们在之前的使用中可以知道，`sockaddr_in` 保存的地址信息是 32 位整型数，因此我们需要将字符串方式表示的 IP 转换成 32 位整数型的数据，这时需要用到以下两个函数
+
+```c
+#include <arpa/inet.h>
+
+// 成功返回 32 位大端序整数型值，失败返回 INADDR_NONE，此函数会紫红进行网络字节序转换
+int_addr_t inet_addr(const char *string);
+
+// 成功返回 1，失败返回 0
+int inet_aton(const char *string, struct in_addr *addr);
+```
+
+除此之外，也可以使用函数将整数型的地址转换成字符串型的地址
+
+```c
+#include <arpa/inet.h>
+
+// 成功返回转换的字符串地址，失败返回 -1
+char *inet_ntoa(struct in_addr adr);
+```
+
+了解了这么多，那么网络地址信息是如何与套接字绑定的呢 —— 就是通过 `bind` 函数，如果此函数调用成功，就是将网络地址信息分配到第一个参数指定套接字中。在 Windows 中使用这些函数的方式与 Linxu 基本相同，这里不再赘述。
+
+
+
+
+

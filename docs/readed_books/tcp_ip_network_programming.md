@@ -2,17 +2,19 @@
 
 **阅读需要具备的基础**：熟悉 C 语言编程、熟悉 C 语言程序在 Linux 或 Windows 下的编写和编译。
 
+**书中代码运行环境**：Neovim 编辑器、gcc 9.4.0 编译器、Ubuntu 20.04 发行版。
+
 ## 理解网络编程和套接字
 
-网络编程就是编写程序让两个计算机通过网络进行数据交互，我们不需要关注计算机之间是用什么传输数据的，也不需要关注传输数据的软件是什么，关注的是如何将让两个计算机建立连接以及怎么传输数据。
+网络编程就是编写程序让两个计算机进行数据交互，我们常用的网络套接字有两种类型：TCP 套接字和 UDP 套接字(套接字是什么东西请自行阅读书籍理解)。
 
-网络服务一般都会有服务端和客户端，服务端用来接收客户端的连接请求、接收和转发客户端的数据，客户端则是进行多个客户端的数据交互，如微信中好友之间的聊天等。下面先来了解 TCP 服务。
+我们先从 TCP 套接字来了解具体的网络编程流程，TCP 套接字在编程网络程序时一般会分为服务器端和客户端，两者的流程是不一样的。
 
-### 服务端
+### 服务器端流程
 
-tcp 服务端的建立在 Linux 中一般有四步，在 Windows 中要多几步，多的这几步仅限对库的使用，先看两个都有的四步，类比家里安装固定电话机：
+tcp 服务器端在 Linux 中一般有四步，在 Windows 中则要多几步，多的这几步是仅限对库的使用，先看两个共有的四步：
 
-1. 创建套接字 ——> 相当于购买一个电话机硬件，通信的前提条件
+1. 创建套接字 ——> 相当于购买一个手机，没有手机就无法进行通信
 
 === "Linux"
 
@@ -33,7 +35,7 @@ tcp 服务端的建立在 Linux 中一般有四步，在 Windows 中要多几步
     SOCKET socket(int af, int type, int protocol);
     ```
 
-2. 给套接字绑定地址信息 ——> 选取电话号码，确保别人知道你的电话号码，可以通过这个号码打过来
+2. 给套接字绑定地址信息 ——> 需要用你的身份信息绑定手机号码
 
 === "Linux"
 
@@ -54,7 +56,7 @@ tcp 服务端的建立在 Linux 中一般有四步，在 Windows 中要多几步
     int bind(SOCKET s, const struct sockaddr *addr, socklen_t addrlen);
     ```
 
-3. 将套接字设置为接收连接的状态 ——> 接上电信局的电话线，电话就处于一个可接听的状态
+3. 将套接字设置为接收连接的状态 ——> 让手机处于开机状态，就能接听电话
 
 === "Linux"
 
@@ -75,7 +77,7 @@ tcp 服务端的建立在 Linux 中一般有四步，在 Windows 中要多几步
     int listen(SOCKET s, int backlog);
     ```
 
-4. 接收连接请求 ——> 拿起电话进行接听
+4. 接收连接请求 ——> 接听电话
 
 === "Linux"
 
@@ -96,7 +98,7 @@ tcp 服务端的建立在 Linux 中一般有四步，在 Windows 中要多几步
     SOCKET accept(SOCKET s, struct sockaddr *addr, socklen_t *addrlen);
     ```
 
-如果使用 Windows 编写网络相关的程序，必须使用 `winsock2.h` 库，并且在编译的时候需要链接 `ws2_32`。在代码中还需初始化此库，并且在结束的时候还需要注销此库，函数如下
+如果使用 Windows 编写网络相关的程序，必须使用 `winsock2.h` 库，并且在编译的时候需要链接 `ws2_32`。在代码中需初始化此库，并且在结束的时候需要注销此库，函数如下
 
 ```c
 #include <winsock2.h>
@@ -104,14 +106,14 @@ tcp 服务端的建立在 Linux 中一般有四步，在 Windows 中要多几步
 // 成功返回 0，失败返回非 0 的错误代码值
 int WSAStartup(WORD wVersionRequested, LPWSDATA lpWSAData);
 
-// WORD 表示 winsock 的版本类型，直接传递则需要使用十六进制表示，高 8 位为副版本号，低八位为主版本号
+// WORD 表示 winsock 的版本类型，直接传递则需要使用十六进制表示，高 8 位为副版本号，低八位为主版本号，如：0x0102
 // 为了方便可以使用 MAKEWORD 函数，只需要两个参数，主版本号和副版本号，如 MAKEWORD(2, 1);
 // 第二个参数就是一个 WSADATA 结构体变量的地址，将其传入即可
 
 int WSACleanup(void);
 ```
 
-初次之外，关闭套接字也是使用独有的函数
+除此之外，Windows 下关闭套接字也是使用不同的函数
 
 ```c
 #include <winsock2.h>
@@ -119,20 +121,52 @@ int WSACleanup(void);
 // 成功返回 0，失败返回 SOCKET_ERROR
 int closesocket(SOCKET s);
 ```
+### 客户端流程
 
-简单 tcp 服务端程序如下：
+客户端的流程相比服务器端就简单很多了，只需要 2 步：
+
+1. 创建套接字，这与服务器端是一样的，网络的前提是有套接字的存在
+2. 向服务器端发送连接请求，此请求必须在服务器端处于监听状态才有用
+
+=== "Liunx"
+
+    ```c
+    #include <sys/types.h>
+    #include <sys/socket.h>
+
+    // 成功返回 0，失败返回 -1
+    int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+    ```
+
+=== "Windows"
+
+    ```c
+    #include <winsock2.h>
+
+    // 成功返回 0，失败返回 SOCKET_ERROR
+    int connect(SOCKET s, const struct sockaddr *addr, socklen_t addrlen);
+    ```
+
+![](./assets/tcp_ip_network_programming/server_and_client_relationship.png)
+
+上面的两个流程是编写 TCP 服务器端和客户端的基本程序框架，在这之后需要理解 TCP 服务器端和客户端的连接流程，详细的内容此处不做赘述，请自行阅读书中内容。
+
+## 基于 TCP 的服务器端和客户端
+
+在了解基本的概念以后和基本的程序框架，下面以代码实现 TCP 的服务端和客户端。
+
+### 服务器端的实现
 
 === "Linux"
 
     ```c
-    #include <arpa/inet.h>
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
+    #include <unistd.h>
     #include <sys/socket.h>
     #include <sys/types.h>
-    #include <unistd.h>
-
-    #define BUFFERSIZE 1024
+    #include <arpa/inet.h>
 
     int main(int argc, char *argv[]) {
       if (2 != argc) {
@@ -141,42 +175,52 @@ int closesocket(SOCKET s);
       }
 
       // 1. 创建套接字
-      int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-      if (-1 == sock_fd) {
-        perror("socket error");
+      int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+      if (-1 == sockfd) {
+        perror("socket() error");
         exit(EXIT_FAILURE);
       }
 
       // 2. 绑定地址信息
       struct sockaddr_in serv_addr;
+      memset(&serv_addr, 0, sizeof(serv_addr));
       serv_addr.sin_family = AF_INET;
       serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
       serv_addr.sin_port = htons(atoi(argv[1]));
-      if (-1 == bind(sock_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
-        perror("bind error");
+      if (-1 == bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
+        perror("bind() error");
+        close(sockfd);
         exit(EXIT_FAILURE);
       }
 
-      // 3. 建立接收连接通道
-      if (-1 == listen(sock_fd, 5)) {
-        perror("listen error");
+      // 3. 打开可连接状态，进入监听
+      if (-1 == listen(sockfd, 5)) {
+        perror("listen() error");
+        close(sockfd);
         exit(EXIT_FAILURE);
       }
 
-      // 4. 接收连接请求
       struct sockaddr_in clnt_addr;
-      socklen_t len = sizeof(clnt_addr);
-      int clnt_fd = accept(sock_fd, (struct sockaddr *)&clnt_addr, &len);
-      if (-1 == clnt_fd) {
-        perror("accept error");
-        exit(EXIT_FAILURE);
+      memset(&clnt_addr, 0, sizeof(clnt_addr));
+      socklen_t clnt_len = sizeof(clnt_addr);
+      for (int i = 0; i < 5; ++i) {
+        int clntfd = accept(sockfd, (struct sockaddr *)&clnt_addr, &clnt_len);
+        if (-1 == clntfd) {
+          perror("accept() error");
+          close(sockfd);
+          exit(EXIT_FAILURE);
+        } else {
+          printf("Connected clinet: %d\n", clntfd);
+        }
+
+        char message[1024] = {0};
+        int str_len = 0;
+        while (0 != (str_len = read(clntfd, message, 1024)))
+          write(clntfd, message, str_len);
+
+        close(clntfd);
       }
-
-      char messages[] = "hello world!";
-      write(clnt_fd, messages, sizeof(messages));
-
-      close(clnt_fd);
-      close(sock_fd);
+      close(sockfd);
 
       return 0;
     }
@@ -187,6 +231,7 @@ int closesocket(SOCKET s);
     ```c
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
     #include <WinSock2.h>
 
     void error_handling(const char *msg);
@@ -208,27 +253,35 @@ int closesocket(SOCKET s);
 
       // 2. 绑定本地信息
       struct sockaddr_in serv_addr;
+      memset(&serv_addr, 0, sizeof(serv_addr));
       serv_addr.sin_family = AF_INET;
       serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
       serv_addr.sin_port = htons(atoi(argv[1]));
-      if (-1 == bind(serv_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)))
+      if (-1 == bind(serv_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
+        closesocket(serv_sock);
         error_handling("bind error");
+      }
 
       // 3. 打开可连接状态
-      if (-1 == listen(serv_sock, 5))
+      if (-1 == listen(serv_sock, 5)) {
+        closesocket(serv_sock);
         error_handling("listen error");
+      }
 
       // 4. 接收客户端的连接
       struct sockaddr_in clnt_addr;
-      int addrlen = sizeof(clnt_addr);
-      SOCKET clnt_sock = accept(serv_sock, (struct sockaddr *)&clnt_addr, &addrlen);
-      if (-1 == clnt_sock)
+      int clnt_len = sizeof(clnt_addr);
+      SOCKET clnt_sock = accept(serv_sock, (struct sockaddr *)&clnt_addr, &clnt_len );
+      if (-1 == clnt_sock) {
+        closesocket(serv_sock);
         error_handling("accept error");
-
+      }
       char message[] = "hello world!";
       int size = send(clnt_sock, message, sizeof(message), 0);
-      if (-1 == size)
+      if (-1 == size) {
+        closesocket(serv_sock);
         error_handling("send error");
+      }
 
       closesocket(clnt_sock);
       closesocket(serv_sock);
@@ -244,45 +297,18 @@ int closesocket(SOCKET s);
     }
     ```
 
-### 客户端
-
-tcp 客户端的搭建只需要两个步骤：
-
-1. 创建套接字 ——> 购买一个电话机
-2. 请求连接 ——> 拨打电话
-
-=== "Liunx"
-
-    ```c
-    #include <sys/types.h>
-    #include <sys/socket.h>
-
-    // 成功返回 0，失败返回 -1
-    int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-    ```
-
-=== "Windows"
-
-    ```c
-    #include <winsock2.h>
-
-    // 成功返回 0，失败返回 SOCKET_ERROR
-    int connect(SOCKET s, const struct sockaddr *addr, socklen_t addrlen);
-    ```
-
-简单 tcp 客户端程序如下：
+### 客户端的实现
 
 === "Linux"
 
     ```c
-    #include <arpa/inet.h>
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
+    #include <unistd.h>
     #include <sys/socket.h>
     #include <sys/types.h>
-    #include <unistd.h>
-
-    #define BUFFERSIZE 1024
+    #include <arpa/inet.h>
 
     int main(int argc, char *argv[]) {
       if (3 != argc) {
@@ -291,31 +317,49 @@ tcp 客户端的搭建只需要两个步骤：
       }
 
       // 1. 创建套接字
-      int clnt_fd = socket(AF_INET, SOCK_STREAM, 0);
-      if (-1 == clnt_fd) {
-        perror("socket error");
+      int clntfd = socket(AF_INET, SOCK_STREAM, 0);
+      if (-1 == clntfd) {
+        perror("socket() error");
         exit(EXIT_FAILURE);
       }
 
-      // 2. 向服务器发送连接请求
+      // 2. 发送连接请求
       struct sockaddr_in clnt_addr;
+      memset(&clnt_addr, 0, sizeof(clnt_addr));
       clnt_addr.sin_family = AF_INET;
-      clnt_addr.sin_addr.s_addr = htonl(argv[1]);
+      clnt_addr.sin_addr.s_addr = inet_addr(argv[1]);
       clnt_addr.sin_port = htons(atoi(argv[2]));
-      if (-1 == connect(clnt_fd, (struct sockaddr *)&clnt_addr, sizeof(clnt_addr))) {
-        perror("connect error");
+      if (-1 == connect(clntfd, (struct sockaddr *)&clnt_addr, sizeof(clnt_addr))) {
+        perror("connect() error");
+        close(clntfd);
         exit(EXIT_FAILURE);
+      } else {
+        printf("Connected ......\n");
       }
 
-      char buffer[BUFFERSIZE] = {0};
-      ssize_t len = read(clnt_fd, buffer, BUFFERSIZE);
-      if (-1 == len) {
-        perror("read error");
-        exit(EXIT_FAILURE);
-      }
+      while (1) {
+        printf("Input message(Q/q to quit): ");
+        char message[1024] = {0};
+        fgets(message, 1024, stdin);
+        if (!strcmp(message, "q\n") || !strcmp(message, "Q\n"))
+          break;
 
-      printf("read from server: %s\n", buffer);
-      close(clnt_fd);
+        int len = write(clntfd, message, sizeof(message));
+        // 由于服务器端是循环发送，如果客户端一次接收，可能接收的不是完整信息，因此也建议循环读取
+        int recv_len = 0;
+        while (recv_len < len) {
+          int rlen = read(clntfd, message, 1024);
+          if (-1 == rlen) {
+            perror("read() error");
+            close(clntfd);
+            exit(EXIT_FAILURE);
+          }
+
+          recv_len += rlen;
+        }
+        printf("read message from server: %s\n", message);
+      }
+      close(clntfd);
 
       return 0;
     }
@@ -326,6 +370,7 @@ tcp 客户端的搭建只需要两个步骤：
     ```c
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
     #include <WinSock2.h>
 
     #define BUFFERSIZE 1024
@@ -349,18 +394,23 @@ tcp 客户端的搭建只需要两个步骤：
 
       // 2. 向服务器发送连接请求
       struct sockaddr_in clnt_addr;
+      memset(&clnt_addr, 0, sizeof(clnt_addr));
       clnt_addr.sin_family = AF_INET;
       clnt_addr.sin_addr.s_addr = inet_addr(argv[1]);
       clnt_addr.sin_port = htons(atoi(argv[2]));
-      if (-1 == connect(clnt_sock, (struct sockaddr *)&clnt_addr, sizeof(clnt_addr)))
+      if (-1 == connect(clnt_sock, (struct sockaddr *)&clnt_addr, sizeof(clnt_addr))) {
+        closesocket(clnt_sock);
         error_handling("connect error");
+      }
 
       char buffer[BUFFERSIZE] = {0};
       int len = recv(clnt_sock, buffer, BUFFERSIZE, 0);
-      if (-1 == len)
+      if (-1 == len) {
+        closesocket(clnt_sock);
         error_handling("recv error");
-      printf("buffer from server: %s\n", buffer);
+      }
 
+      printf("buffer from server: %s\n", buffer);
       closesocket(clnt_sock);
       // 注销 winsock 库
       WSACleanup();
@@ -376,183 +426,446 @@ tcp 客户端的搭建只需要两个步骤：
 
 编译运行上述两个程序，先启动服务端的程序，再启动客户端的程序。此时客户端会收到服务端发来的数据，并且两个程序都会立即退出。
 
-上述两个程序使用 `read` 和 `write` 函数，是因为在 Linux 中，一切都是文件，socket 也是文件，因此可以使用文件相关的读写操作。而在 Windows 中，网络套接字和文件是有区别的，需要使用网络读写专用的函数 `recv` 和 `send` 来进行操作，这两个函数在 Linux 中也适用。
+在 Linux 中均使用 `read` 和 `write` 函数，是因为在 Linux 中，一切都是文件，socket 也是文件，因此可以使用文件相关的读写操作。而在 Windows 中，网络套接字和文件是有区别的，需要使用网络读写专用的函数 `recv` 和 `send` 来进行操作，这两个函数在 Linux 中也适用。
 
-## 套接字类型与协议设置
+此时 TCP 服务器端和客户端都已实现，但是有一个问题 —— 目前的服务器只能处理一个客户端的连接请求，那么连接请求队列就没有实际意义，那么如何才能处理多个客户端的连接请求？最简单的办法，在受理连接请求、处理数据、关闭套接字这些操作上在套一层循环，其流程如下
 
-什么是协议(Protocol)，简单的说就是两个通信对象之间的一种通信方式，就比如我们人与人之间交流用中文，这就是一种协议(大家约定好的规则)。
+![](./assets/tcp_ip_network_programming/server_by_iterator.png)
 
-在前面提到过 `socket` 函数是用来创建套接字的，但是没有提到参数怎么用，此处做详细的分析。
+简单的修改服务器端的代码如下
 
 ```c
-#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/socket.h>
-
-// domain：套接字中使用的协议族(protocol family)信息
-// type：套接字数据传输类型信息
-// protocol：计算机间通信中使用的协议信息
-int socket(int domain, int type, int protocol);
-```
-
-### 协议族
-
-套接字中使用的协议有很多，这些协议在一起统称为协议族，定义在 `sys/socket.h` 头文件中，协议族中的协议简单分为以下几类(这里只介绍常用的)：
-
-- `AF_INET`：IPv4 互联网协议族
-- `AF_INET6`：IPv6 互联网协议族
-- `AF_LOCAL/AF_UNIX`：本地通信的 UNIX 协议族
-- `AF_PACKET`：底层套接字的协议族
-- `AF_IPX`：IPX Novell 协议族
-
-套接字的协议类型是由第一个参数决定，选取上面的其中一个
-
-### 套接字类型
-
-套接字类型是由第二个参数决定，来决定套接字的数传输方式，每一种协议都会由多种数据传输方式，下面以 `AF_INET` 来介绍两个具有代表性的数据传输方式：
-
-- `SOCK_STREAM`(面向连接的套接字)：面向连接，顾名思义就是必须要有连接才能进行数据传输，由以下几个特点，有点类似传送带传送物品
-    - 传输的过程中数据不会丢失
-    - 按序传输数据
-    - 传输的数据不存在数据边界
-    - 套接字连接必须一一对应
-- `SOCK_DRGAM`(面向消息的套接字)：顾名思义就是只管发，不管客户端是否有接收，有以下几个特点
-    - 强调快速传输而非传输顺序
-    - 传输的数据可能丢失也可能损毁
-    - 传输的数据没有边界
-    - 限制每次传输的数据大小
-
-### 最终协议的确定
-
-套接字的最终协议以及数据传输方式是由最后一个参数确定的，但是我们一般默认为 0，除非出现数据传输方式相同但协议不同的场景才会对最后一个参数做改变。如基于 TCP 套接字和 UDP 套接字就可以写成如下的样子
-
-```c
-int tcp_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-int udp_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-```
-
-tcp 数据传输方式如下图所示
-
-![](./assets/tcp_ip_network_programming/ch02/tcp_transport.png)
-
-## 地址族与数据序列
-
-IP(Internet Protocol) 是为收发网络数据而分配给计算机的值，可以通过这个 IP 找到指定的计算机，而端口是区分程序中创建的套接字而分配给套接字的序号。
-
-IP 地址分为两类，这两类地址的差别主要在于表示 IP 地址所用的字节数：
-
-- IPv4(Internet Protocol version 4)：4 字节地址族
-- IPv6(Internet Protocol version 6)：16 字节地址族，解决 2010 年前后 IP 地址耗尽的问题
-
-现在主要使用的还是 IPv4，其 4 字节内容会保存两个信息，分别是网络地址和主机地址，有以下四种方式表示
-
-![](./assets/tcp_ip_network_programming/ch03/ipv4_addr_family.png)
-
-因此在局域网中的所有主机的网络地址是相同的，而主机地址是不同的，此时外网有主机需要发送数据到此局域网中的某个主机中，首先解析 IP 地址中的网络地址，然后在由该网路地址的路由器或交换机根据数据中的主机地址想目标主机传递数据。
-
-这 4 字节的 IP 地址信息是如何区分出来哪些字节是网络地址，哪些字节是主机地址，这是根据 IP 地址的边界来区分的，如：
-
-- A 类地址的首字节范围：0~127
-- B 类地址的首字节范围：128~191
-- C 类地址的首字节范围：192~223
-
-有了 IP 就能区分计算机，但是还无法定位到主机主机终端具体程序，此时需要端口号来区分。端口号是与套接字一一对应的，因此无法将一个端口号分配给不同的套接字，这也是为什么前面不能以相同的端口号启动两次服务端。端口号是由 16 位构成，可分配的端口范围就为 0 ~ 65535。但 0 ~ 1023 是系统分配给特定程序的，所以我们使用的时候，要分配此范围之外的端口号。另外，虽然 TCP 套接字不能重复端口号，但是 UDP 和 TCP 不会共用套接字，所以两者是可以重复的。
-
-### 地址信息的表示
-
-IP 地址信息在代码中是通过结构体来表示的，在结构体中需要说明地址族类型、IP 地址以及端口号等信息，其结构为
-
-```c
-struct sockaddr_in {
-  sa_family_t sin_family; // 地址族
-  uint16_t sin_port;      // 16 位 TCP/UDP 端口号
-  struct in_addr sin_addr;// 32 位 IP 地址
-  char sin_zero[8];       // 不使用
-};
-
-//
-// IPv4 Internet address
-// This is an 'on-wire' format structure.
-//
-typedef struct in_addr {
-  union {
-    struct { UCHAR s_b1,s_b2,s_b3,s_b4; } S_un_b;
-    struct { USHORT s_w1,s_w2; } S_un_w;
-    ULONG S_addr;
-  } S_un;
-#define s_addr  S_un.S_addr /* can be used for most tcp & ip code */
-#define s_host  S_un.S_un_b.s_b2    // host on imp
-#define s_net   S_un.S_un_b.s_b1    // network
-#define s_imp   S_un.S_un_w.s_w2    // imp
-#define s_impno S_un.S_un_b.s_b4    // imp #
-#define s_lh    S_un.S_un_b.s_b3    // logical host
-} IN_ADDR, *PIN_ADDR, FAR *LPIN_ADDR;
-```
-
-为什么 `bind` 函数需要的是 `sockaddr` 结构体变量地址，而我们却传递 `sockaddr_in` 结构体变量的地址，这是因为 `sockaddr` 将 IP 地址和端口等信息保存在一起，这种方式较为麻烦，从下面的结构定义可以看出
-
-```c
-struct sockaddr {
-  sa_family_t sin_family;
-  char sa_data[14];
-};
-```
-
-### 网络字节序与地址变换
-
-不同的 CPU 中，数据的保存方式是不同的，如 4 字节的整型值 1 可以用 二进制表示如下
-
-00000000 00000000 00000000 00000001
-
-有些 CPU 则会倒序保存，保存形式如下
-
-00000001 00000000 00000000 00000000
-
-这两种方式就是所谓的大端序和小端序：
-
-- 大端序(Big Endian)：高位字节序存放到低位地址
-- 小端序(Little Endian)：高位字节序存放到高位地址
-
-如下所示：
-
-![](./assets/tcp_ip_network_programming/ch03/edian.png)
-
-如果两个计算机采用的是不同的字节序，则通过网络传输数据，解析后的数据是错误的，如 0x1234 小端序的机器发送到大端序解析后就是 0x3412。因此，在使用网络传输数据时约定统一方式，这种约定称为网络字节序 —— 大端序。
-
-也就是说，在进行网络传输时，小端序的机器必须进行转换，将数据转换成大端序，有以下几个转换函数：
-
-- `unsigned short htons(unsigned short);`
-- `unsigned short ntons(unsigned short);`
-- `unsigned long htonl(unsigned long);`
-- `unsigned long ntonl(unsigned long);`
-
-其中 h 代表主机字节序，n 代表网络网络字节序，这也是为什么在填充 `sockaddr_in` 结构体时要换成网络字节序。但是，不管你的主机是什么字节序，在编写代码时，都建议经过主机字节序转换为网络字节序的过程。
-
-### 网络地址的初始化与分配
-
-我们在之前的使用中可以知道，`sockaddr_in` 保存的地址信息是 32 位整型数，因此我们需要将字符串方式表示的 IP 转换成 32 位整数型的数据，这时需要用到以下两个函数
-
-```c
+#include <sys/types.h>
 #include <arpa/inet.h>
 
-// 成功返回 32 位大端序整数型值，失败返回 INADDR_NONE，此函数会紫红进行网络字节序转换
-int_addr_t inet_addr(const char *string);
+int main(int argc, char *argv[]) {
+  if (2 != argc) {
+    fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+    exit(EXIT_FAILURE);
+  }
 
-// 成功返回 1，失败返回 0
-int inet_aton(const char *string, struct in_addr *addr);
+  // 1. 创建套接字
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (-1 == sockfd) {
+    perror("socket() error");
+    exit(EXIT_FAILURE);
+  }
+
+  // 2. 绑定地址信息
+  struct sockaddr_in serv_addr;
+  memset(&serv_addr, 0, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  serv_addr.sin_port = htons(atoi(argv[1]));
+  if (-1 == bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
+    perror("bind() error");
+    close(sockfd);
+    exit(EXIT_FAILURE);
+  }
+
+  // 3. 打开可连接状态，进入监听
+  if (-1 == listen(sockfd, 5)) {
+    perror("listen() error");
+    close(sockfd);
+    exit(EXIT_FAILURE);
+  }
+
+  struct sockaddr_in clnt_addr;
+  memset(&clnt_addr, 0, sizeof(clnt_addr));
+  socklen_t clnt_len = sizeof(clnt_addr);
+  for (int i = 0; i < 5; ++i) {
+    int clntfd = accept(sockfd, (struct sockaddr *)&clnt_addr, &clnt_len);
+    if (-1 == clntfd) {
+      perror("accept() error");
+      close(sockfd);
+      exit(EXIT_FAILURE);
+    } else {
+      printf("Connected clinet: %d\n", clntfd);
+    }
+
+    char message[1024] = {0};
+    int str_len = 0;
+    while (0 != (str_len = read(clntfd, message, 1024)))
+      write(clntfd, message, str_len);
+
+    close(clntfd);
+  }
+  close(sockfd);
+
+  return 0;
+}
 ```
 
-除此之外，也可以使用函数将整数型的地址转换成字符串型的地址
+## 基于 UDP 的服务端和客户端
+
+UDP 就相当于以前的信件邮寄，我们将信件的地址信息填好，放入邮筒以后，信件是否到达指定的地方我们是无法知道的，信件是否完好无损我们也是无法知道的，信件是否丢失也无法知道。UDP 就是只管将消息发送出去，而不管接收者是否接收到的一种套接字。
+
+UDP 不像 TCP 那样需要建立连接，TCP 因为建立连接，套接字就知道目标地址信息，而 UDP 是无法知道地址信息，因此在进行通信时需要知道目标的地址信息。如下函数中需要传入目标地址信息
+
+=== "Linux"
+
+    ```c
+    #include <sys/socket.h>
+
+    // @return 成功返回传输的字节数，失败返回 -1
+    // @ params:
+    //   sock: 用于传输数据的 UDP 套接字文件描述符
+    //   buff: 保存待传输数据的缓冲地址值
+    //   nbytes: 待传输的数据长度，以字节为单位
+    //   flags: 可选项参数，若没有则传递 0
+    //   to/from: 存有目标地址信息的 sockaddr 结构体变量的地址值
+    //   adrlen: 传递给参数 to 的地址值结构体变量长度
+    ssize_t sendto(int sock, void *buff, size_t nbytes, int flags,
+                  struct sockaddr *to, socklen_t addrlen);
+
+    ssize_t recvfrom(int sock, void *buff, size_t nbytes, int flags,
+                    struct sockaddr *from, socklen_t *addrlen);
+    ```
+
+=== "Windows"
+
+    ```c
+    #include <winsock2.h>
+
+    // @return 成功返回对应的字节数，失败返回 -1
+    // @ params:
+    //   sock: 用于传输数据的 UDP 套接字文件描述符
+    //   buff: 保存待传输数据的缓冲地址值
+    //   nbytes: 待传输的数据长度，以字节为单位
+    //   flags: 可选项参数，若没有则传递 0
+    //   to/from: 存有目标地址信息的 sockaddr 结构体变量的地址值
+    //   adrlen: 传递给参数 to 的地址值结构体变量长度
+    int sendto(SOCKET sock, const char *buff, size_t nbytes, int flags,
+              const struct sockaddr *to, int addrlen);
+
+    int recvfrom(SOCKET sock, const char *buff, size_t nbytes, int flags,
+                const struct sockaddr *from, int *addrlen);
+    ```
+
+### UDP 的服务端实现
+
+=== "Linux"
+
+    ```c
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <unistd.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
+    #include <arpa/inet.h>
+
+    int main(int argc, char *argv[]) {
+      if (2 != argc) {
+        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+      }
+
+      // 1. 创建套接字
+      int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+      if (-1 == sockfd) {
+        perror("socket() error");
+        exit(EXIT_FAILURE);
+      }
+
+      // 2. 使用 bind 分配 IP 地址，减轻 sendto 的功能
+      struct sockaddr_in saddr;
+      memset(&saddr, 0, sizeof(saddr));
+      saddr.sin_family = AF_INET;
+      saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+      saddr.sin_port = htons(atoi(argv[1]));
+      if (-1 == bind(sockfd, (struct sockaddr *)&saddr, sizeof(saddr))) {
+        perror("bind() error");
+        exit(EXIT_FAILURE);
+      }
+
+      struct sockaddr_in caddr;
+      memset(&caddr, 0, sizeof(caddr));
+      socklen_t addr_len = sizeof(caddr);
+      while (1) {
+        char message[1024] = {0};
+        int ret = recvfrom(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, &addr_len);
+        if (-1 == ret) {
+          perror("recvfrom() error");
+          close(sockfd);
+          exit(EXIT_FAILURE);
+        }
+
+        sendto(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, addr_len);
+      }
+
+      close(sockfd);
+
+      return 0;
+    }
+    ```
+
+=== "Windows"
+
+    ```c
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <winsock2.h>
+
+    int main(int argc, char *argv[]) {
+      if (2 != argc) {
+        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+      }
+
+      WSADATA ws_data;
+      WSAStartup(MAKEWORD(2, 2), &ws_data);
+      // 1. 创建套接字
+      SOCKET sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+      if (-1 == sockfd) {
+        perror("socket() error");
+        exit(EXIT_FAILURE);
+      }
+
+      // 2. 使用 bind 分配 IP 地址，减轻 sendto 的功能
+      struct sockaddr_in saddr;
+      memset(&saddr, 0, sizeof(saddr));
+      saddr.sin_family = AF_INET;
+      saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+      saddr.sin_port = htons(atoi(argv[1]));
+      if (-1 == bind(sockfd, (struct sockaddr *)&saddr, sizeof(saddr))) {
+        perror("bind() error");
+        exit(EXIT_FAILURE);
+      }
+
+      struct sockaddr_in caddr;
+      memset(&caddr, 0, sizeof(caddr));
+      int addr_len = sizeof(caddr);
+      while (1) {
+        char message[1024] = {0};
+        int ret = recvfrom(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, &addr_len);
+        if (-1 == ret) {
+          perror("recvfrom() error");
+          closesocket(sockfd);
+          exit(EXIT_FAILURE);
+        }
+
+        sendto(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, addr_len);
+      }
+
+      closesocket(sockfd);
+      WSACleanup();
+      return 0;
+    }
+    ```
+
+### UDP 的客户端实现
+
+=== "Linux"
+
+    ```c
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <unistd.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
+    #include <arpa/inet.h>
+
+    int main(int argc, char *argv[]) {
+      if (3 != argc) {
+        fprintf(stderr, "Usage: %s <ip> <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+      }
+
+      // 1. 创建套接字
+      int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+      if (-1 == sockfd) {
+        perror("socket() error");
+        exit(EXIT_FAILURE);
+      }
+
+      struct sockaddr_in caddr;
+      memset(&caddr, 0, sizeof(caddr));
+      caddr.sin_family = AF_INET;
+      caddr.sin_addr.s_addr = inet_addr(argv[1]);
+      caddr.sin_port = htons(atoi(argv[2]));
+      while (1) {
+        printf("Input message(q/Q to quit): ");
+        char message[1024] = {0};
+        fgets(message, 1024, stdin);
+        if (!strcmp(message, "Q\n") || !strcmp(message, "q\n"))
+          break;
+
+        sendto(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, sizeof(caddr));
+
+        socklen_t addr_len = sizeof(caddr);
+        recvfrom(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, &addr_len);
+        printf("message from server: %s\n", message);
+      }
+
+      close(sockfd);
+
+      return 0;
+    }
+    ```
+
+=== "Windows"
+
+    ```c
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <winsock2.h>
+
+    int main(int argc, char *argv[]) {
+      if (3 != argc) {
+        fprintf(stderr, "Usage: %s <ip> <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+      }
+
+      WSADATA ws_data;
+      WSAStartup(MAKEWORD(2, 2), &ws_data);
+      // 1. 创建套接字
+      SOCKET sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+      if (-1 == sockfd) {
+        perror("socket() error");
+        exit(EXIT_FAILURE);
+      }
+
+      struct sockaddr_in caddr;
+      memset(&caddr, 0, sizeof(caddr));
+      caddr.sin_family = AF_INET;
+      caddr.sin_addr.s_addr = inet_addr(argv[1]);
+      caddr.sin_port = htons(atoi(argv[2]));
+      while (1) {
+        printf("Input message(q/Q to quit): ");
+        char message[1024] = {0};
+        fgets(message, 1024, stdin);
+        if (!strcmp(message, "Q\n") || !strcmp(message, "q\n"))
+          break;
+
+        sendto(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, sizeof(caddr));
+
+        int addr_len = sizeof(caddr);
+        recvfrom(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, &addr_len);
+        printf("message from server: %s\n", message);
+      }
+
+      closesocket(sockfd);
+      WSACleanup();
+      return 0;
+    }
+    ```
+
+`sendto` 在发现尚未分配地址信息，自动给套接字分配 IP 地址和端口，但是 TCP 中通过 `bind` 和 `connect` 进行地址信息的分配，在 UDP 中也可以使用这两个函数。如果 UDP 的服务需要长时间通信，则建议使用 `connect` 或 `bind` 进行地址分配，简化 `sendto` 的功能，能提升程序的整体效率。
+
+### UDP 的数据传输特性
+
+UDP 的数据传输特性不同于 TCP，UDP 数据是存在数据边界的，简单的说 UDP 中发几次数据，就得分几次接收，通过下面的程序进行测试。
+
+**服务器端**:
 
 ```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <arpa/inet.h>
 
-// 成功返回转换的字符串地址，失败返回 -1
-char *inet_ntoa(struct in_addr adr);
+int main(int argc, char *argv[]) {
+  if (2 != argc) {
+    fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+    exit(EXIT_FAILURE);
+  }
+
+  // 1. 创建套接字
+  int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (-1 == sockfd) {
+    perror("socket() error");
+    exit(EXIT_FAILURE);
+  }
+
+  // 2. 使用 bind 分配 IP 地址，减轻 sendto 的功能
+  struct sockaddr_in saddr;
+  memset(&saddr, 0, sizeof(saddr));
+  saddr.sin_family = AF_INET;
+  saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  saddr.sin_port = htons(atoi(argv[1]));
+  if (-1 == bind(sockfd, (struct sockaddr *)&saddr, sizeof(saddr))) {
+    perror("bind() error");
+    exit(EXIT_FAILURE);
+  }
+
+  char message[1024];
+  struct sockaddr_in caddr;
+  memset(&caddr, 0, sizeof(caddr));
+  socklen_t addr_len = sizeof(caddr);
+  for (int i = 0; i < 3; ++i) {
+    sleep(5);
+    int ret = recvfrom(sockfd, message, 1024, 0, (struct sockaddr *)&caddr, &addr_len);
+    printf("Message %d: %s\n", i+1, message);
+  }
+
+  close(sockfd);
+
+  return 0;
+}
 ```
 
-了解了这么多，那么网络地址信息是如何与套接字绑定的呢 —— 就是通过 `bind` 函数，如果此函数调用成功，就是将网络地址信息分配到第一个参数指定套接字中。在 Windows 中使用这些函数的方式与 Linxu 基本相同，这里不再赘述。
+**客户端**：
 
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
 
+int main(int argc, char *argv[]) {
+  if (3 != argc) {
+    fprintf(stderr, "Usage: %s <ip> <port>\n", argv[0]);
+    exit(EXIT_FAILURE);
+  }
 
+  // 1. 创建套接字
+  int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  if (-1 == sockfd) {
+    perror("socket() error");
+    exit(EXIT_FAILURE);
+  }
 
+  struct sockaddr_in saddr;
+  memset(&saddr, 0, sizeof(saddr));
+  saddr.sin_family = AF_INET;
+  saddr.sin_addr.s_addr = inet_addr(argv[1]);
+  saddr.sin_port = htons(atoi(argv[2]));
+  socklen_t addr_len = sizeof(saddr);
+  if (-1 == connect(sockfd, (struct sockaddr *)&saddr, addr_len)) {
+    perror("connect() error");
+    close(sockfd);
+    exit(EXIT_FAILURE);
+  } else {
+    printf("Connected ......\n");
+  }
+
+  char msg1[] = "Hi!";
+  char msg2[] = "I'm another UDP host";
+  char msg3[] = "Nice to meet you";
+  sendto(sockfd, msg1, sizeof(msg1), 0, (struct sockaddr *)&saddr, sizeof(saddr));
+  sendto(sockfd, msg2, sizeof(msg1), 0, (struct sockaddr *)&saddr, sizeof(saddr));
+  sendto(sockfd, msg3, sizeof(msg1), 0, (struct sockaddr *)&saddr, sizeof(saddr));
+
+  close(sockfd);
+
+  return 0;
+}
+```
+
+运行结果，客户端在启动的一瞬间就结束，服务器端会间隔 5 秒显示客户端发来的 3 条数据。
 

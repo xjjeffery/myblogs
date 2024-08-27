@@ -149,7 +149,7 @@ int closesocket(SOCKET s);
 
 ![](./assets/tcp_ip_network_programming/server_and_client_relationship.png)
 
-上面的两个流程是编写 TCP 服务器端和客户端的基本程序框架，在这之后需要理解 TCP 服务器端和客户端的连接流程，详细的内容此处不做赘述，请自行阅读书中内容。
+上面的两个流程是编写 TCP 服务器端和客户端的基本程序框架，至于什么是地址族？地址信息是什么？地址信息如何表示？网络地址如何分配等问题，此处不做详细的描述，请自行阅读书中内容。
 
 ## 基于 TCP 的服务器端和客户端
 
@@ -869,3 +869,310 @@ int main(int argc, char *argv[]) {
 
 运行结果，客户端在启动的一瞬间就结束，服务器端会间隔 5 秒显示客户端发来的 3 条数据。
 
+## 优雅地断开套接字连接
+
+了解完 TCP 和 UDP 的基本程序以后，下面是对程序的优化。在之前的 TCP 程序中，我们断开连接是直接使用 `close` 或 `closesocket` 函数，这种断开方式是使得双方都不能发送和接收数据。但在一些情况下需要即使断开连接也连接收数据或发送数据的状态，这该如何实现，首先理解 TCP 的数据流
+
+![](./assets/tcp_ip_network_programming/tcp_io.png)
+
+一旦两台主机建立套接字连接，每个主机都会拥有独立的输入流和输出流，然后输入流与另一台的输出流相连，我们只需断开其中一个流就能实现我们想要实现的功能。使用下面的函数
+
+=== "Linux"
+
+    ```c
+    #include <sys/socket.h>
+
+    // sock: 需要断开的套接字描述符
+    // howto: 传递断开的方式
+    //        1. SHUT_RD：断开输入流，无法接收数据
+    //        2. SHUT_WR：断开输出流，无法发送数据
+    //        3. SHUT_RDWR：同时断开 I/O 流
+    // 成功返回 0，失败返回 -1
+    int shutdown(int sock, int howto);
+    ```
+
+=== "Windows"
+
+    ```c
+    #include <winsock2.h>
+
+    // sock: 需要断开的套接字描述符
+    // howto: 传递断开的方式
+    //        1. SHUT_RD：断开输入流，无法接收数据
+    //        2. SHUT_WR：断开输出流，无法发送数据
+    //        3. SHUT_RDWR：同时断开 I/O 流
+    // 成功返回 0，失败返回 -1
+    int shutdown(SOCKET sock, int howto);
+    ```
+
+## 域名及网络地址
+
+在网络中，域名系统(Domain Name System, DNS) 很重要，我们可以通过 DNS 查询域名的 IP 地址，如此一来，我们就不需要记忆难以记忆的 IP 地址数字，只需牢记具有特点的域名。并且域名一般是不会改变，而 IP 地址是会经常发生变动的，但我们依然可以通过 DNS 查找到指定域名的 IP 进行访问。
+
+![](./assets/tcp_ip_network_programming/dns_server.png)
+
+如上是 DNS 的查询路径，DNS 会根据域名一级一级到长层的 DNS 服务器中查找对应的 IP 地址，得到 IP 地址后就原路返回。
+
+域名与 IP 地址可以按键值对的方式区理解，一个域名绑定一个 IP 地址，当然域名可以绑定多个 IP 地址。在实际的程序开发中，使用域名会比使用 IP 地址更加的灵活，因此我需要一些函数调用通过域名获取 IP 地址或通过 IP 地址获取域名。
+
+=== "Linux"
+
+    ```c
+    #include <netdb.h>
+
+    // 成功时返回 hostent 结构体地址，失败时返回 NULL 指针
+    struct hostent *gethostbyname(const char *hostname);
+    struct hostent *gethostbyaddr(const char *addr, socklen_t len, int family);
+    ```
+
+=== "Windows"
+
+    ```c
+    #include <winsock2.h>
+
+    // 成功时返回 hostent 结构体地址，失败时返回 NULL 指针
+    struct hostent *gethostbyname(const char *hostname);
+    struct hostent *gethostbyaddr(const char *addr, int len, int type);
+    ```
+
+返回的结构体 `hostent` 的具体形式如下:
+
+```c
+struct hostent {
+  char *h_name;       // 保存官方域名
+  char **h_aliases;   // 访问同一主页的其他域名
+  int h_addrtype;     // IP 地址族信息
+  int h_length;       // 保存 IP 地址族的长度
+  char **h_addr_list; // 以整数形式保存域名对应的 IP 地址
+};
+```
+
+!!! example "获取指定域名的 IP 信息"
+
+    ```c
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <unistd.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
+    #include <arpa/inet.h>
+    #include <netdb.h>
+
+    int main(int argc, char *argv[]) {
+      if (2 != argc) {
+        fprintf(stderr, "Usage: %s <hostname>\n", argv[0]);
+        exit(EXIT_FAILURE);
+      }
+
+      struct hostent *host = gethostbyname(argv[1]);
+      if (!host) {
+        fprintf(stderr, "gethostbyname() error\n");
+        exit(EXIT_FAILURE);
+      }
+
+      printf("Official name: %ss \n", host->h_name);
+      for (int i = 0; host->h_aliases[i]; ++i)
+        printf("Aliasers %d: %s\n", i+1, host->h_aliases[i]);
+
+      printf("Addresss type: %s\n", (host->h_addrtype == AF_INET) ? "AF_INET" : "AF_INET6");
+      for (int i = 0; host->h_addr_list[i]; ++i)
+        printf("IP addr %d: %s\n", i+1, inet_ntoa(*(struct in_addr*)host->h_addr_list[i]));
+
+      return 0;
+    }
+    ```
+
+## 多进程服务器端
+
+之前的 TCP 服务器端程序在同一时刻只能处理一个客户端，无法同时处理多个客户端，这并不是我们想要的。所以我们需要重新编写 TCP 服务器端程序，让其实现并发。并发服务器端的实现模型和方法有以下三个：
+
+- 多进程服务器：通过创建多个进程提供服务
+- 多路复用服务器：通过捆绑并统一管理 I/O 对象提供服务
+- 多线程服务器：通过生成与客户端等量的线程提供服务
+
+关于进程和线程的详细内容，请自行阅读相关书籍。下面通过代码实现多进程的服务器端程序
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <arpa/inet.h>
+
+void read_childproc(int sig);
+
+int main(int argc, char *argv[]) {
+  if (2 != argc) {
+    fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+    exit(EXIT_FAILURE);
+  }
+
+  int servfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (-1 == servfd) {
+    perror("socket() error");
+    exit(EXIT_FAILURE);
+  }
+
+  struct sockaddr_in serv_addr;
+  memset(&serv_addr, 0, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  serv_addr.sin_port = htons(atoi(argv[1]));
+  if (-1 == bind(servfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
+    perror("bind() error");
+    close(servfd);
+    exit(EXIT_FAILURE);
+  }
+
+  if (-1 == listen(servfd, 5)) {
+    perror("listen() error");
+    close(servfd);
+    exit(EXIT_FAILURE);
+  }
+
+  struct sigaction act;
+  act.sa_handler = read_childproc;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+  sigaction(SIGCHLD, &act, 0);
+
+  for (int i = 0; i < 5; ++i) {
+    struct sockaddr_in clnt_addr;
+    memset(&clnt_addr, 0, sizeof(clnt_addr));
+    int addr_len = sizeof(clnt_addr);
+    int str_len = 0;
+    char message[1024] = {0};
+    int clntfd = accept(servfd, (struct sockaddr *)&clnt_addr, &addr_len);
+    if (-1 == clntfd) {
+      perror("accept() error");
+      continue;
+    } else {
+      puts("new client connect...");
+    }
+
+    pid_t pid = fork();
+    if (-1 == pid) {
+      perror("fork() error");
+      close(clntfd);
+      continue;
+    }
+
+    if (0 == pid) {
+      // 因为fork以后会将父进程的所有东西都进行了复制，如套接字
+      // 因此在子进程中需要将复制过来的套接字关闭
+      close(servfd);
+      while (0 != (str_len = read(clntfd, message, 1024)))
+        write(clntfd, message, str_len);
+
+      close(clntfd);
+      puts("client disconnected...");
+      return 0;
+    } else {
+      close(clntfd);
+    }
+  }
+
+  close(servfd);
+
+  return 0;
+}
+
+void read_childproc(int sig) {
+  pid_t pid;
+  int status;
+  pid = waitpid(-1, &status, WNOHANG);
+  printf("remove proc id: %d \n", pid);
+}
+```
+
+!!! example "客户端 I/O 分割"
+
+    在之前的客户端中，发送数据和接收数据是写在一切的，一般都是在客户端发送完数据后，等待服务器端的数据接收，这种等待在一定程度上是一种浪费。为了提高效率，可以将发送数据和接收数据分别放在两个进程中，父进程负责发送数据，子进程负责接收数据，两个互补干扰，其模型和数据交换方式如下
+
+    ![](./assets/tcp_ip_network_programming/io_split.png)
+
+    具体的程序如下:
+
+    ```c
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <unistd.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
+    #include <arpa/inet.h>
+
+    void read_routine(int sock, char *buf);
+    void write_routine(int sock, char *buf);
+
+    int main(int argc, char *argv[]) {
+      if (3 != argc) {
+        fprintf(stderr, "Usage: %s <ip> <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+      }
+
+      // 1. 创建套接字
+      int clntfd = socket(AF_INET, SOCK_STREAM, 0);
+      if (-1 == clntfd) {
+        perror("socket() error");
+        exit(EXIT_FAILURE);
+      }
+
+      // 2. 发送连接请求
+      struct sockaddr_in clnt_addr;
+      memset(&clnt_addr, 0, sizeof(clnt_addr));
+      clnt_addr.sin_family = AF_INET;
+      clnt_addr.sin_addr.s_addr = inet_addr(argv[1]);
+      clnt_addr.sin_port = htons(atoi(argv[2]));
+      if (-1 == connect(clntfd, (struct sockaddr *)&clnt_addr, sizeof(clnt_addr))) {
+        perror("connect() error");
+        close(clntfd);
+        exit(EXIT_FAILURE);
+      } else {
+        printf("Connected ......\n");
+      }
+
+      pid_t pid = fork();
+      if (-1 == pid) {
+        perror("fork() error");
+        close(clntfd);
+        exit(EXIT_FAILURE);
+      }
+
+      char message[1024] = {0};
+      if (0 == pid)
+        write_routine(clntfd, message);
+      else
+        read_routine(clntfd, message);
+
+      close(clntfd);
+
+      return 0;
+    }
+
+    void read_routine(int sock, char *buf) {
+      while(1) {
+        int str_len = read(sock, buf, 1024);
+        if (0 == str_len)
+          return;
+
+        printf("message from server: %s\n", buf);
+      }
+    }
+
+    void write_routine(int sock, char *buf) {
+      while (1) {
+        printf("Input message(Q/q to quit): ");
+        fgets(buf, 1024, stdin);
+        if (!strcmp(buf, "q\n") || !strcmp(buf, "Q\n")) {
+          shutdown(sock, SHUT_WR);
+          return;
+        }
+        write(sock, buf, sizeof(buf));
+      }
+    }
+    ```

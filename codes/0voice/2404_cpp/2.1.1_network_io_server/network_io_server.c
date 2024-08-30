@@ -100,6 +100,11 @@ void* client_thread(void *arg) {
   while (1) {
     char message[1024] = {0};
     int count = recv(clntfd, message, 1024, 0);
+    if (0 == count) {
+      printf("client disconnect: %d\n", clntfd);
+      close(clntfd);
+      break;
+    }
     printf("RECV: %s\n", message);
     count = send(clntfd, message, count, 0);
     printf("SEND: %d\n", count);

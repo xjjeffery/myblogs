@@ -151,12 +151,12 @@ extra_javascript:
 
 nav:
   - index.md
+  - Linux 系统编程:
+    - linux/linux_system_programming/standard_io.md
+    - linux/linux_system_programming/file_io.md
+    - linux/linux_system_programming/files_and_directories.md
   - Linux C/C++ 高级开发:
     - 高性能网络设计专栏:
       - 0voice/2404_cpp/network/network_io_server.md
       - 0voice/2404_cpp/network/network_io_multi_plexing.md
-  - TCP/IP 网络编程: readed_books/tcp_ip_network_programming.md
-  - Linux 系统编程:
-    - linux/linux_system_programming/standard_io.md
-    - linux/linux_system_programming/file_io.md
 

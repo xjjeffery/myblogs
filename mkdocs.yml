@@ -155,6 +155,7 @@ nav:
     - linux/linux_system_programming/standard_io.md
     - linux/linux_system_programming/file_io.md
     - linux/linux_system_programming/files_and_directories.md
+    - linux/linux_system_programming/system_data_files_and_info.md
   - Linux C/C++ 高级开发:
     - 高性能网络设计专栏:
       - 0voice/2404_cpp/network/network_io_server.md

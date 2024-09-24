@@ -6,8 +6,8 @@ site_url: https://xjjeffery.github.io
 use_directory_urls: false
 
 # Repository
-repo_name: xjjeffery/myblogs
-repo_url: https://github.com/xjjeffery/myblogs
+# repo_name: xjjeffery/myblogs
+# repo_url: https://github.com/xjjeffery/myblogs
 
 # Copyright
 copyright: Copyright &copy; 2024 JunXu</br>The website content is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>
@@ -85,6 +85,12 @@ plugins:
       separator: '[\s\u200b\-]'
       jieba_dict_user: dict.small.txt
   - tags
+  - git-revision-date-localized:
+      type: timeago
+      timezone: Asia/ShangHai
+      locale: en
+      fallback_to_build_date: false
+      enable_creation_date: true
   # - literate-nav:
   #     implicit_index: true
 

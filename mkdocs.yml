@@ -166,6 +166,7 @@ nav:
     - linux/linux_system_programming/process_control.md
     - linux/linux_system_programming/relationships_and_daemon.md
     - linux/linux_system_programming/signals.md
+    - linux/linux_system_programming/threads.md
   - Linux C/C++ 高级开发:
     - 高性能网络设计专栏:
       - 0voice/2404_linux_cpp/network/network_programming_2_1_1.md

@@ -123,12 +123,24 @@
   color: var(--md-default-fg-color);
 }
 
+.md-typeset h1::before {
+  content:"👀 " ;
+}
+
 .md-typeset h2 {
   font-weight: 400;
 }
 
+.md-typeset h2::before {
+  content:"📌 " ;
+}
+
 .md-typeset h3 {
   font-weight: 500;
+}
+
+.md-typeset h3::before {
+  content:"🔰 " ;
 }
 
 .md-typeset h5 {

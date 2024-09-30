@@ -339,7 +339,7 @@ Unix 系统支持文件在不同的进程间共享打开文件，在了解如何
 
 /**
   * @param
-  *   oldfd：需要复制的旧的文件描述符
+  *   oldfd：需要复制的文件描述符
   * @return：成功返回复制后创建的文件描述符，失败返回 -1
   */
 int dup(int oldfd);
@@ -399,7 +399,7 @@ int dup(int oldfd);
       // 关闭标准输出
       if (STDOUT_FILENO != fd) {
         close(STDOUT_FILENO);
-        // 使用 dup 拷贝，此时的文件描述符就是 1
+        // 复制 fd，产生一个占用 1 的文件描述符
         dup(fd);
       }
       // 保持下面的内容不动，将下面的内容输出的到文件中
@@ -449,7 +449,7 @@ int dup2(int oldfd, int newfd);
         exit(EXIT_FAILURE);
       }
 
-      // 使用 dup2 将 3 替换成 1
+      // 将 fd 复制到 STDOUT_FILENO 位置，如果 STDOUT_FILENO 已打开，先关闭，再复制
       dup2(fd, STDOUT_FILENO);
       // 保持下面的内容不动，将下面的内容输出的到文件中
       puts("Hello World!");

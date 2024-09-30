@@ -168,6 +168,8 @@ nav:
     - linux/linux_system_programming/signals.md
     - linux/linux_system_programming/threads.md
     - linux/linux_system_programming/advanced_io.md
+    - linux/linux_system_programming/interprocess_communication.md
+    - linux/linux_system_programming/network_ipc_socket.md
   - Linux C/C++ 高级开发:
     - 高性能网络设计专栏:
       - 0voice/2404_linux_cpp/network/network_programming_2_1_1.md

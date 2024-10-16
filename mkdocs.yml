@@ -161,3 +161,5 @@ extra_javascript:
 nav:
   - git 图文教程:
     - git/introduction.md
+    - git/installation.md
+    - git/branch.md

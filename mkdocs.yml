@@ -165,3 +165,4 @@ nav:
     - git/getting_started.md
     - git/branch.md
     - git/rollback.md
+    - git/flow.md

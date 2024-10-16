@@ -2,13 +2,13 @@
 
 分支就是从某一个节点分离出去的“副本”，分支是可以独立发展、独立编辑、提交等操作，也可以和其它分支合并。分支是 Git 的核心必杀利器之一，分支创建、切换、删除都很快(分支就是一个指针，指向分离时提交记录的节点)，是非常的轻量。
 
-<div align="center"> <img src="./assets/git-branch_1.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_1.png"/> </div>
 
 ## 分支(branch)
 
 比如有一个项目团队，准备 10 月份发布新版本，要新开发一堆黑科技功能，占领市场。你和你的小伙伴(小咪)一起负责开发一个新的功能A，开发周期为 2 周，这两周你们的代码不能影响其他人(不影响主分支)。这个时候可以为这个新功能创建一个分支，你们两个在这个分支上干活，2 周后代码开发完成、测试通过，就看将此分支合并到主分支上。安全、高效，不影响其他人工作，简直是完美。
 
-<div align="center"> <img src="./assets/git-branch_2.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_2.png"/> </div>
 
 在实际项目中，一般会建几个主线分支：
 
@@ -65,7 +65,7 @@ $ git branch -a
 
 代码仓库可以有多个分支，`master` 为默认的主分支，但只有一个分支在工作状态。所以要操作不同分支，需要切换到该分支，HEAD 就是指向当前正在活动的分支。
 
-<div align="center"> <img src="./assets/git-branch_3.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_3.png"/> </div>
 
 ```bash
 # 切换到 dev 分支，HEAD 指向了 dev
@@ -92,13 +92,13 @@ ref: refs/heads/dev
 
 把两个分支的修改内容合并到一起，常用的合并指令 `git merge <branch>`，将分支 `<branch>` 合并到当前分支。根据要合并的内容的不同，具体合并过程就会有多种情况。
 
-<div align="center"> <img src="./assets/git-branch_4.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_4.png"/> </div>
 
 ### 快速合并(fast forward)
 
 如下图，`master` 分支么有任何提交，`git merge dev` 合并分支 `dev` 到 `master`，此时合并速度就非常快，直接移动 `master` 的“指针”引用到 `dev` 即可。这就是快速合并（Fast forward），不会产生新的提交。
 
-<div align="center"> <img src="./assets/git-branch_5.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_5.png"/> </div>
 
 - 合并 `dev` 到 `master`，注意要先切换到 `master` 分支，然后执行 `git merge dev`，把 `dev` 合并到当前分支。
 
@@ -113,7 +113,7 @@ ref: refs/heads/dev
 - 如果两边变更的文件不同，没有什么冲突，就自动合并了。
 - 如果有修改同一个文件，则会存在冲突，到底该采用哪边的，程序无法判断，就换产生冲突。冲突内容需要人工修改后再重新提交，才能完成最终的合并。
 
-<div align="center"> <img src="./assets/git-branch_6.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_6.png"/> </div>
 
 上图中，创建 `dev` 分支后，两个分支都有修改提交，因此两个分支就不在一条顺序线上了，此时合并 `dev` 到 `master` 就得把他们的修改进行合并操作了。
 
@@ -125,7 +125,7 @@ ref: refs/heads/dev
 
 在有冲突的文件中，`<<<<<<< HEAD` 开头的内容就表示是有冲突的部分，需要人工处理，可以借助一些第三方的对比工具。人工处理完毕后，完成合并提交，才最终完成此次合并。`<<<<<<<` 和 `=======` 之间的所有内容都是你的本地修改，这些修改还没有在远程版本库中。`=======` 和 `>>>>>>>` 之间的所有行都来自远程版本库或另一个分支的修改。
 
-<div align="center"> <img src="./assets/git-branch_7.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_7.png"/> </div>
 
 如下图所示，修正所有冲突的地方之后，执行提交。
 
@@ -135,7 +135,7 @@ ref: refs/heads/dev
 
 把两个分支的修改内容合并到一起的办法有两种：`merge` 和 `rebase`，作用都是一样，区别是 `rebase` 是将本分支的所有提交重演到另一个分支(查看log，相当于只在这个分支上提交)，`merge` 是将分支合并到另一个分支(查看log，可以通过提交记录看到具体的开发流程)。
 
-<div align="center"> <img src="./assets/git-branch_9.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_9.png"/> </div>
 
 在 `dev` 上执行 `git rebase master` 变基，将 `dev` 分支上的 `v7` 、`v8` 生成的补丁，在 `master` 分支上。然后回到 `master` 分支，完成合并 `git merge dev`，此时的合并就是快速合并。最终的提交记录就没有分叉了。
 
@@ -153,7 +153,7 @@ $ git merge dev
 
 默认标签是打在最新提交的 `commit` 上的，如果希望在指定的提交上打标签则带上提交编号(commit id)：`git tag v0.9 f52c633`
 
-<div align="center"> <img src="./assets/git-branch_10.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_10.png"/> </div>
 
 | **指令** | **描述** |
 | --- | --- |
@@ -235,7 +235,7 @@ $ git stash pop
 
 出现一个紧急 bug，并在 `dev` 上修复完，此时我们想把在 `dev` 上修复 bug 所做的修改 “复制” 到 `master` 分支，但又不想把整个 `dev` 合并过去。为了方便操作，Git 专门提供了一个 `cherry-pick` 命令，让我们将一个特定的提交到复制到当前分支，不管这个提交在哪个分支。
 
-<div align="center"> <img src="./assets/git-branch_11.png"/> </div> <br>
+<div align="center"> <img src="./assets/git-branch_11.png"/> </div>
 
 如上图，操作过程相当于将该提交导出为补丁文件，然后在当前 HEAD 上重放，形成无论内容还是提交说明都一致的提交。
 

@@ -165,6 +165,8 @@ nav:
   - Linux C/C++ 高级编程:
     - 高性能网络设计:
       - linux/linux_advanced_programming/high-performance_network/network_programming_2_1_1.md
+  - Linux 服务器编程:
+    - linux/high-performance_server/posix_socket_api.md
   - git 图文教程:
     - git/introduction.md
     - git/installation.md

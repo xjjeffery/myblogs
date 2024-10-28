@@ -159,12 +159,12 @@ extra_javascript:
   # - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/contrib/auto-render.min.js
 
 nav:
+  - C++:
+    - 基础语法:
+      - cpp/basics/varibles_and_basic_types.md
   - MySQL:
     - databases/mysql/installation_and_config.md
     - databases/mysql/user_and_privileges_manage.md
-  - Linux C/C++ 高级编程:
-    - 高性能网络设计:
-      - linux/linux_advanced_programming/high-performance_network/network_programming_2_1_1.md
   - Linux 服务器编程:
     - linux/high-performance_server/posix_socket_api.md
   - git 图文教程:

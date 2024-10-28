@@ -163,6 +163,7 @@ nav:
     - 基础语法:
       - cpp/basics/varibles_and_basic_types.md
       - cpp/basics/expression.md
+      - cpp/basics/statement.md
   - MySQL:
     - databases/mysql/installation_and_config.md
     - databases/mysql/user_and_privileges_manage.md

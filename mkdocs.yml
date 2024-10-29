@@ -93,7 +93,7 @@ plugins:
       enable_creation_date: true
       exclude:
           - index.md
-      enable: true
+      enabled: true
   # - literate-nav:
   #     implicit_index: true
 
@@ -164,11 +164,13 @@ nav:
       - cpp/basics/varibles_and_basic_types.md
       - cpp/basics/expression.md
       - cpp/basics/statement.md
+  - Linux C 系统编程:
+    - linux/apue/standard_io.md
+  - Linux 服务器编程:
+    - linux/high-performance_server/posix_socket_api.md
   - MySQL:
     - databases/mysql/installation_and_config.md
     - databases/mysql/user_and_privileges_manage.md
-  - Linux 服务器编程:
-    - linux/high-performance_server/posix_socket_api.md
   - git 图文教程:
     - git/introduction.md
     - git/installation.md

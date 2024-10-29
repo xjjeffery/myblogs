@@ -164,6 +164,7 @@ nav:
       - cpp/basics/varibles_and_basic_types.md
       - cpp/basics/expression.md
       - cpp/basics/statement.md
+      - cpp/basics/function.md
   - Linux C 系统编程:
     - linux/apue/standard_io.md
     - linux/apue/file_io.md

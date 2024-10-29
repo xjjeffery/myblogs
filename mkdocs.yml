@@ -168,6 +168,7 @@ nav:
   - Linux C 系统编程:
     - linux/apue/standard_io.md
     - linux/apue/file_io.md
+    - linux/apue/files_and_directories.md
   - Linux 服务器编程:
     - linux/high-performance_server/posix_socket_api.md
   - MySQL:

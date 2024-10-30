@@ -170,6 +170,7 @@ nav:
     - linux/apue/file_io.md
     - linux/apue/files_and_directories.md
     - linux/apue/system_data_files_and_info.md
+    - linux/apue/process_environment.md
   - Linux 服务器编程:
     - linux/high-performance_server/posix_socket_api.md
   - MySQL:

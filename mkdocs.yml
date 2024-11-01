@@ -165,6 +165,13 @@ nav:
       - cpp/basics/expression.md
       - cpp/basics/statement.md
       - cpp/basics/function.md
+  - 算法通关:
+    - dsa/class001.md
+    - dsa/class002.md
+    - dsa/class003.md
+    - dsa/class004.md
+    - dsa/class005.md
+    - dsa/class006.md
   - Linux C 系统编程:
     - linux/apue/standard_io.md
     - linux/apue/file_io.md

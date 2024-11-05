@@ -183,7 +183,6 @@ nav:
     - linux/server_development/red_black_tree.md
   - MySQL:
     - databases/mysql/installation_and_config.md
-    - databases/mysql/user_and_privileges_manage.md
   - git 图文教程:
     - git/introduction.md
     - git/installation.md

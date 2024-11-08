@@ -165,6 +165,7 @@ nav:
       - cpp/basics/expression.md
       - cpp/basics/statement.md
       - cpp/basics/function.md
+      - cpp/basics/class.md
   - 算法通关:
     - dsa/class001.md
     - dsa/class002.md

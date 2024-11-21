@@ -163,3 +163,4 @@ nav:
     - git/introduction.md
     - git/installation.md
     - git/getting_started.md
+    - git/branch.md

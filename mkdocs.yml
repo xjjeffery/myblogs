@@ -1,0 +1,161 @@
+# Project information
+site_name: jeffery 的个人网站
+site_author: jeffery
+site_dir: xjjeffery.github.io
+site_url: https://xjjeffery.github.io
+use_directory_urls: false
+
+# Repository
+# repo_name: xjjeffery/myblogs
+# repo_url: https://github.com/xjjeffery/myblogs
+
+# Copyright
+copyright: Copyright &copy; 2024 JunXu</br>The website content is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>
+
+# Configuration
+theme:
+  name: material
+  custom_dir: overrides
+  language: zh
+  features:
+    - announce.dismiss
+    # - content.action.edit
+    # - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tabs.link
+    - content.tooltips
+    # - header.autohide
+    # - navigation.expand
+    - navigation.indexes
+    # - navigation.instant
+    # - navigation.prune
+    # - navigation.path
+    # - navigation.sections
+    # - navigation.tabs
+    # - navigation.tabs.sticky
+    - navigation.top
+    # - navigation.footer
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    # - toc.integrate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: 浅色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: 深色模式
+  # font:
+  #   text: Noto Sans SC
+  #   code: Fira Code
+  icon:
+    # logo: logo
+    repo: fontawesome/brands/github
+
+extra:
+  generator: false
+
+# Plugins
+plugins:
+  - offline
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      effect: zoom
+      slide_effect: none
+      width: 100%
+      height: auto
+      zoomable: true
+      draggable: false
+      auto_caption: false
+      caption_position: bottom
+  - search:
+      separator: '[\s\u200b\-]'
+      jieba_dict_user: dict.small.txt
+  - tags
+  - git-revision-date-localized:
+      type: iso_date
+      timezone: Asia/ShangHai
+      locale: en
+      fallback_to_build_date: false
+      enable_creation_date: true
+      exclude:
+          - index.md
+      enabled: true
+  # - literate-nav:
+  #     implicit_index: true
+
+# Extensions
+markdown_extensions:
+  # Admonitions(警告)
+  - admonition
+  - pymdownx.details
+  # Buttons(按钮)
+  - attr_list
+  # Code blocks(代码块)
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  # Content tabs(选项卡)
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+          kwds:
+              case: lower
+  # Data tables(数据表)
+  - tables
+  # Diagrams(图表)
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  # Footnotes(脚注)
+  - footnotes
+  - abbr
+  # Lists(列表)
+  - def_list
+  - pymdownx.tasklist:
+      clickable_checkbox: true
+  - md_in_html
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+
+extra_css:
+  - stylesheets/extra.css
+  # - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  # - javascripts/katex.js
+  # - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.js  
+  # - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/contrib/auto-render.min.js
+
+nav:

@@ -164,3 +164,4 @@ nav:
     - git/installation.md
     - git/getting_started.md
     - git/branch.md
+    - git/rollback.md

@@ -167,3 +167,4 @@ nav:
     - git/rollback.md
     - git/flow.md
     - git/repository.md
+    - git/submodule_guide.md

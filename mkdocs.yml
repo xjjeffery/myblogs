@@ -26,16 +26,15 @@ theme:
     - content.tabs.link
     - content.tooltips
     # - header.autohide
-    # - navigation.expand
-    - navigation.indexes
+    # 导航栏设置
+    # - navigation.expand     # 默认展开所有可折叠的小节
     # - navigation.instant
-    # - navigation.prune
-    # - navigation.path
-    # - navigation.sections
-    # - navigation.tabs
-    # - navigation.tabs.sticky
-    - navigation.top
-    # - navigation.footer
+    - navigation.indexes      # 将索引页与概述性文章关联
+    - navigation.prune        # 修剪导航选项卡
+    - navigation.path         # 在标题上方显示导航路径
+    - navigation.tabs         # 在顶部显示导航选项卡
+    - navigation.tabs.sticky  # 固定导航选项卡
+    - navigation.top          # 返回顶部按钮
     - navigation.tracking
     - search.highlight
     - search.share

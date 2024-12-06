@@ -1,6 +1,6 @@
 # 在 Ubuntu 设置静态 IP
 
-!!! info "文章来源"
+!!! info "参考链接"
 
     - [Setting a Static IP in Ubuntu – Linux IP Address Tutorial](https://www.freecodecamp.org/news/setting-a-static-ip-in-ubuntu-linux-ip-address-tutorial/)
 

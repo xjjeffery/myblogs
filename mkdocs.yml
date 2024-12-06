@@ -163,6 +163,7 @@ nav:
       - linux/basics/partition.md
     - Linux 配置:
       - linux/configs/setting_static_ip.md
+      - linux/configs/install_samba.md
   - Git 图文教程:
     - git/introduction.md
     - git/installation.md

@@ -161,6 +161,8 @@ nav:
   - Linux:
     - Linux 基础:
       - linux/basics/partition.md
+    - Linux 配置:
+      - linux/configs/setting_static_ip.md
   - Git 图文教程:
     - git/introduction.md
     - git/installation.md
